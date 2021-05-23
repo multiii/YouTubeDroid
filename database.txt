@@ -1,0 +1,5 @@
+database.db Schema:
+
+TABLE info_mode:
+  (NOT NULL) INTEGER id
+  (NOT NULL) BOOLEAN is_info

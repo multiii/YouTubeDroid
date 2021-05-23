@@ -8,6 +8,7 @@ authors = ["Your Name <you@example.com>"]
 python = "^3.8"
 youtube-search-python = "^1.4.5"
 discord = "^1.0.1"
+union = "^0.1.10"
 
 [tool.poetry.dev-dependencies]
 

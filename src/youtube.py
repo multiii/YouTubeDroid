@@ -1,6 +1,8 @@
 import datetime
+from typing import Iterable
 
 import discord
+import sqlite3
 from discord.ext import commands
 from youtubesearchpython import VideosSearch
 
@@ -8,6 +10,62 @@ class YouTube(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
     self.menus = {}
+
+  def has_row(self, check: str, qmark: Iterable) -> bool:
+    con = sqlite3.connect('database.db')
+    cur = con.cursor()
+
+    cur.execute(check, qmark)
+
+    rows = cur.fetchall()
+
+    con.close()
+
+    return len(rows) != 0
+
+  async def send_info(self, ctx, video):
+    embed = discord.Embed(
+      title=video["title"],
+      url=video["link"],
+      description=f'**Channel:** [{video["channel"]["name"]}]({video["channel"]["link"]})\n\n**Views:** `{video["viewCount"]["text"]}`\n\n**Published:** `{video["publishedTime"]}`\n\n**Duration:** `{video["accessibility"]["duration"]}`\n\n**Description:** `{video["descriptionSnippet"][-1]["text"] if video["descriptionSnippet"] != None else "No Description"}`',
+      color=discord.Color.green(),
+      timestamp=datetime.datetime.now()
+    )
+
+    embed.set_thumbnail(url=video["channel"]["thumbnails"][-1]["url"])
+    embed.set_image(url=video["thumbnails"][-1]["url"])
+
+    msg = await ctx.send(embed=embed)
+
+    await msg.add_reaction("▶️")
+
+    reaction, user = await self.bot.wait_for("reaction_add", check=lambda r, u: ctx.author == u and str(r.emoji) == "▶️" and r.message == msg)
+
+    await ctx.send(f'Here is your requested video!\n\n{video["link"]}')
+
+  @commands.command(aliases=("inf",), brief="Used to toggle info mode on or off", description="`yt info`")
+  async def info(self, ctx):
+    con = sqlite3.connect('database.db')
+    cur = con.cursor()
+
+    cur.execute("SELECT * FROM info_mode WHERE id = ?", (ctx.author.id,))
+
+    rows = cur.fetchall()
+
+    if len(rows) == 0:
+      cur.execute("""INSERT INTO info_mode (id, is_info) VALUES (?, ?)""", (ctx.author.id, 1))
+
+      await ctx.send("Info mode was turned on <:online:846059164593029181>")
+
+      con.commit()
+      return con.close()
+
+    cur.execute("""DELETE FROM info_mode WHERE id = ?""", (ctx.author.id,))
+
+    await ctx.send("Info mode was turned off <:off:846059204921524304>")
+
+    con.commit()
+    con.close()
 
   @commands.command(aliases=("s",), brief="Used to search for content on YouTube", description="`yt search <keyword>`")
   async def search(self, ctx, *, keyword=None, page: int=1):
@@ -20,7 +78,7 @@ class YouTube(commands.Cog):
     index = 9 * page - 8
 
     for video in searches:
-      desc += f"`{index}.` [{video['title']}](https://www.youtube.com/watch?v={video['id']}) `{video['duration']}`\nㅤby [{video['channel']['name']}]({video['channel']['link']}) • {video['viewCount']['short']}\n\n"
+      desc += f"`{index}.` [{video['title']}]({video['link']}) `{video['duration']}`\nㅤby [{video['channel']['name']}]({video['channel']['link']}) • {video['viewCount']['short']}\n\n"
 
       index += 1
 
@@ -51,7 +109,10 @@ class YouTube(commands.Cog):
 
     await msg.delete()
 
-    await ctx.send(f'Here is your requested video!\n\nhttps://www.youtube.com/watch?v={searches[reactions.index(reaction.emoji)]["id"]}')
+    if self.has_row(check="SELECT * FROM info_mode WHERE id = ?", qmark=(ctx.author.id,)):
+      return await self.send_info(ctx, searches[reactions.index(reaction.emoji)])
+
+    await ctx.send(f'Here is your requested video!\n\n{searches[reactions.index(reaction.emoji)]["link"]}')
 
   @commands.command(aliases=("n",), brief="Used to switch to the next page of a menu", description="`yt next`")
   async def next(self, ctx):
