@@ -23,7 +23,7 @@ class YouTube(commands.Cog):
 
     return len(rows) != 0
 
-  async def send_info(self, ctx, video):
+  async def send_info(self, ctx, video, searches):
     embed = discord.Embed(
       title=video["title"],
       url=video["link"],
@@ -36,6 +36,8 @@ class YouTube(commands.Cog):
     embed.set_image(url=video["thumbnails"][-1]["url"])
 
     msg = await ctx.send(embed=embed)
+
+    self.menus.update({ctx.author.id: (searches, video, "info")})
 
     await msg.add_reaction("▶️")
 
@@ -94,7 +96,7 @@ class YouTube(commands.Cog):
 
     msg = await ctx.send(embed=embed)
 
-    self.menus.update({ctx.author.id: (keyword, page)})
+    self.menus.update({ctx.author.id: (keyword, page, "search")})
 
     reactions = ("1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣")
 
@@ -110,7 +112,7 @@ class YouTube(commands.Cog):
     await msg.delete()
 
     if self.has_row(check="SELECT * FROM info_mode WHERE id = ?", qmark=(ctx.author.id,)):
-      return await self.send_info(ctx, searches[reactions.index(reaction.emoji)])
+      return await self.send_info(ctx, searches[reactions.index(reaction.emoji)], searches=searches)
 
     await ctx.send(f'Here is your requested video!\n\n{searches[reactions.index(reaction.emoji)]["link"]}')
 
@@ -119,21 +121,38 @@ class YouTube(commands.Cog):
     if ctx.author.id not in self.menus:
       return await ctx.send("Couldn't find a previous menu to paginate.")
 
-    if self.menus[ctx.author.id][1] > 1:
-      return await self.search(ctx, keyword=self.menus[ctx.author.id][0], page=self.menus[ctx.author.id][1] - 1)
+    menu = self.menus[ctx.author.id]
 
-    await ctx.send("You've already reached the first page in the menu.")
+    if menu[2] == "search":
+      if menu[1] > 1:
+        return await self.search(ctx, keyword=menu[0], page=menu[1] - 1)
 
+      return await ctx.send("You've already reached the first page in the menu.")
+
+    if menu[2] == "info":
+
+      if menu[0].index(menu[1]) > 0:
+        return await self.send_info(ctx, video=menu[0][menu[0].index(menu[1]) - 1], searches=menu[0])
+
+      return await ctx.send("You've already reached the first video on this page.")
+  
   @commands.command(aliases=("n",), brief="Used to switch to the next page of a menu", description="`yt next`")
   async def next(self, ctx):
     if ctx.author.id not in self.menus:
       return await ctx.send("Couldn't find a previous menu to paginate.")
 
-    try:
-      await self.search(ctx, keyword=self.menus[ctx.author.id][0], page=self.menus[ctx.author.id][1] + 1)
+    menu = self.menus[ctx.author.id]
 
-    except IndexError:
-      await ctx.send("You've already reached the last page in the menu.")
+    if menu[2] == "search":
+      return await self.search(ctx, keyword=menu[0], page=menu[1] + 1)
+
+    if menu[2] == "info":
+      try:
+        return await self.send_info(ctx, video=menu[0][menu[0].index(menu[1]) + 1], searches=menu[0])
+      
+      except IndexError:
+        return await ctx.send("You've already reached the last video on this page.")
+    
 
 def setup(bot):
   bot.add_cog(YouTube(bot))
