@@ -7,7 +7,7 @@ class Misc(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @commands.command(brief='Display the help menu', aliases=("h",), description="`yt help [command]`")
+  @commands.command(brief='Used to display the help menu', aliases=("h",), description="`yt help [command]`")
   async def help(self, ctx, command = None):
     if command:
       commands = [command.name.lower() for command in list(self.bot.commands)]

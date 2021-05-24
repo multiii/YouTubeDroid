@@ -114,6 +114,16 @@ class YouTube(commands.Cog):
 
     await ctx.send(f'Here is your requested video!\n\n{searches[reactions.index(reaction.emoji)]["link"]}')
 
+  @commands.command(aliases=("p", "prev"), brief="Used to switch to the previous page of a menu", description="`yt previous`")
+  async def previous(self, ctx):
+    if ctx.author.id not in self.menus:
+      return await ctx.send("Couldn't find a previous menu to paginate.")
+
+    if self.menus[ctx.author.id][1] > 1:
+      return await self.search(ctx, keyword=self.menus[ctx.author.id][0], page=self.menus[ctx.author.id][1] - 1)
+
+    await ctx.send("You've already reached the first page in the menu.")
+
   @commands.command(aliases=("n",), brief="Used to switch to the next page of a menu", description="`yt next`")
   async def next(self, ctx):
     if ctx.author.id not in self.menus:
