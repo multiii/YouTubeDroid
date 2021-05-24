@@ -31,8 +31,8 @@ Here is a list of all commands that this bot has to offer, along with detailed d
 
 I believe the bot is still in a pretty early state, and I have quite a lot of features planned. Some of them are:
 
-- Adding a `previous` command, along with better ways to traverse through menus
-- Adding channel and playlist search
+- Adding a command to easily traverse through videos in an playing (using an embed)
+- Adding channel search
 - Adding custom search for 4k, 360 and Live videos
 - Adding recommendations after the end of a video ..and much more
 
