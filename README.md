@@ -3,7 +3,7 @@ A Discord bot used to directly search for and view YouTube videos from Discord, 
 
 I've provided the source code here for educational purposes, but if you do want to use it, invite my [Discord bot](https://discord.com/api/oauth2/authorize?client_id=722011282068209736&permissions=8&scope=bot) to your servers instead of running this code yourself.
 
-Contributions were another reason for this repository being public. However, it would be better if you make an issue if you want to contribute to this bot.
+Contributions were another reason for this repository being made public. However, it would be better if you make an issue if you want to contribute to this bot.
 \
 &nbsp;
 ## List of Commands
