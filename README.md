@@ -16,6 +16,8 @@ Here is a list of all commands that this bot has to offer, along with detailed d
 
 - `yt info` Used to toggle info mode on or off. Info mode allows the user to view a detailed embed providing info on a video when it is chosen from a menu | `Aliases: inf`
 
+- `yt previous` Used to switch to the previous page of a menu | `Aliases: prev, p`
+
 - `yt next` Used to switch to the next page of a menu | `Aliases: n`
 
 ### Miscellaneous Commands:
