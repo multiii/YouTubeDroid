@@ -125,6 +125,5 @@ class YouTube(commands.Cog):
     except IndexError:
       await ctx.send("You've already reached the last page in the menu.")
 
-
 def setup(bot):
   bot.add_cog(YouTube(bot))
