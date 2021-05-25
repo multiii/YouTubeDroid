@@ -23,6 +23,7 @@ class YouTube(commands.Cog):
 
     return len(rows) != 0
 
+  @classmethod
   async def send_info(self, ctx, video, searches):
     embed = discord.Embed(
       title=video["title"],
@@ -45,32 +46,8 @@ class YouTube(commands.Cog):
 
     await ctx.send(f'Here is your requested video!\n\n{video["link"]}')
 
-  @commands.command(aliases=("inf",), brief="Used to toggle info mode on or off", description="`yt info`")
-  async def info(self, ctx):
-    con = sqlite3.connect('database.db')
-    cur = con.cursor()
-
-    cur.execute("SELECT * FROM info_mode WHERE id = ?", (ctx.author.id,))
-
-    rows = cur.fetchall()
-
-    if len(rows) == 0:
-      cur.execute("""INSERT INTO info_mode (id, is_info) VALUES (?, ?)""", (ctx.author.id, 1))
-
-      await ctx.send("Info mode was turned on <:online:846059164593029181>")
-
-      con.commit()
-      return con.close()
-
-    cur.execute("""DELETE FROM info_mode WHERE id = ?""", (ctx.author.id,))
-
-    await ctx.send("Info mode was turned off <:off:846059204921524304>")
-
-    con.commit()
-    con.close()
-
-  @commands.command(aliases=("s",), brief="Used to search for content on YouTube", description="`yt search <keyword>`")
-  async def search(self, ctx, *, keyword=None, page: int=1):
+  @classmethod
+  async def _search(self, ctx, *, keyword=None, page: int=1):
     if not keyword:
       return await ctx.send("Command Usage: `yt!search <keyword>`")
 
@@ -116,8 +93,8 @@ class YouTube(commands.Cog):
 
     await ctx.send(f'Here is your requested video!\n\n{searches[reactions.index(reaction.emoji)]["link"]}')
 
-  @commands.command(aliases=("p", "prev"), brief="Used to switch to the previous page of a menu", description="`yt previous`")
-  async def previous(self, ctx):
+  @classmethod
+  async def _previous(self, ctx):
     if ctx.author.id not in self.menus:
       return await ctx.send("Couldn't find a previous menu to paginate.")
 
@@ -135,9 +112,9 @@ class YouTube(commands.Cog):
         return await self.send_info(ctx, video=menu[0][menu[0].index(menu[1]) - 1], searches=menu[0])
 
       return await ctx.send("You've already reached the first video on this page.")
-  
-  @commands.command(aliases=("n",), brief="Used to switch to the next page of a menu", description="`yt next`")
-  async def next(self, ctx):
+
+  @classmethod
+  async def _next(self, ctx):
     if ctx.author.id not in self.menus:
       return await ctx.send("Couldn't find a previous menu to paginate.")
 
@@ -152,7 +129,42 @@ class YouTube(commands.Cog):
       
       except IndexError:
         return await ctx.send("You've already reached the last video on this page.")
-    
 
+  @commands.command(aliases=("inf",), brief="Used to toggle info mode on or off", description="`yt info`")
+  async def info(self, ctx):
+    con = sqlite3.connect('database.db')
+    cur = con.cursor()
+
+    cur.execute("SELECT * FROM info_mode WHERE id = ?", (ctx.author.id,))
+
+    rows = cur.fetchall()
+
+    if len(rows) == 0:
+      cur.execute("""INSERT INTO info_mode (id, is_info) VALUES (?, ?)""", (ctx.author.id, 1))
+
+      await ctx.send("Info mode was turned on <:online:846059164593029181>")
+
+      con.commit()
+      return con.close()
+
+    cur.execute("""DELETE FROM info_mode WHERE id = ?""", (ctx.author.id,))
+
+    await ctx.send("Info mode was turned off <:off:846059204921524304>")
+
+    con.commit()
+    con.close()
+
+  @commands.command(aliases=("s",), brief="Used to search for content on YouTube", description="`yt search <keyword>`")
+  async def search(self, ctx, *, keyword=None, page: int=1):
+    await self._search(ctx, keyword=keyword, page=page)
+
+  @commands.command(aliases=("p", "prev"), brief="Used to switch to the previous page of a menu", description="`yt previous`")
+  async def previous(self, ctx):
+    await self._previous(ctx)
+
+  @commands.command(aliases=("n",), brief="Used to switch to the next page of a menu", description="`yt next`")
+  async def next(self, ctx):
+    await self._next(ctx)
+  
 def setup(bot):
   bot.add_cog(YouTube(bot))
